@@ -29,7 +29,7 @@ urllib2.install_opener(urllib2.build_opener())
 ### Vaguely Customizable Options ###
 
 # The email address messages are from by default:
-DEFAULT_FROM = "bozo@dev.null.invalid"
+DEFAULT_FROM = "user@rss2email.invalid"
 
 # 1: Send text/html messages when possible.
 # 0: Convert HTML to plain text.
