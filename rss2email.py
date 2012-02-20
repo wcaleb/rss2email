@@ -108,7 +108,7 @@ PROXY=""
 
 # To most correctly encode emails with international characters, we iterate through the list below and use the first character set that works
 # Eventually (and theoretically) ISO-8859-1 and UTF-8 are our catch-all failsafes
-CHARSET_LIST='US-ASCII', 'BIG5', 'ISO-2022-JP', 'ISO-8859-1', 'UTF-8'
+CHARSET_LIST='US-ASCII', 'ISO-8859-1', 'UTF-8', 'BIG5', 'ISO-2022-JP'
 
 from email.MIMEText import MIMEText
 from email.Header import Header
