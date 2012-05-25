@@ -111,9 +111,16 @@ PROXY=""
 CHARSET_LIST='US-ASCII', 'ISO-8859-1', 'UTF-8', 'BIG5', 'ISO-2022-JP'
 
 from email.MIMEText import MIMEText
-from email.Header import Header
+from email.Header import Header as _Header
 from email.Utils import parseaddr, formataddr
-                         
+
+class Header(_Header):
+    # Work-around for <http://bugs.python.org/issue5871>
+    def append(self, s=None, *args, **kwargs):
+        if s is not None:
+            s = s.replace('\n', ' ').replace('\r', ' ')
+        _Header.append(self, s, *args, **kwargs)
+
 # Note: You can also override the send function.
 
 def send(sender, recipient, subject, body, contenttype, extraheaders=None, smtpserver=None):
