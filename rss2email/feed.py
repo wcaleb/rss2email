@@ -777,5 +777,6 @@ class Feed (object):
             if guid not in self.seen:
                 self.seen[guid] = {}
             self.seen[guid]['id'] = id_
+            self.seen[guid]['message-id'] = message['message-id']
         self.etag = parsed.get('etag', None)
         self.modified = parsed.get('modified', None)
