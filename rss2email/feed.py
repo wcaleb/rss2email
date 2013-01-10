@@ -128,6 +128,7 @@ class Feed (object):
         'etag',
         'modified',
         'seen',
+        'thread_keys',
         ]
 
     ## saved/loaded from ConfigParser instance
@@ -406,6 +407,7 @@ class Feed (object):
                 return  # already seen
         sender = self._get_entry_email(parsed=parsed, entry=entry)
         subject = self._get_entry_title(entry)
+        thread_keys = self._get_entry_thread_keys(entry)
         extra_headers = _collections.OrderedDict((
                 ('Date', self._get_entry_date(entry)),
                 ('Message-ID', '<{}@dev.null.invalid>'.format(_uuid.uuid4())),
@@ -415,6 +417,11 @@ class Feed (object):
                 ('X-RSS-URL', self._get_entry_link(entry)),
                 ('X-RSS-TAGS', self._get_entry_tags(entry)),
                 ))
+        references = self._get_entry_references(
+            entry, thread_keys, extra_headers)
+        if references:
+            extra_headers['In-Reply-To'] = references[0]
+            extra_headers['References'] = ' '.join(references)
         for k,v in extra_headers.items():  # remove empty tags, etc.
             if v is None:
                 extra_headers.pop(k)
@@ -438,7 +445,7 @@ class Feed (object):
             body=content['value'],
             content_type=content['type'].split('/', 1)[1],
             extra_headers=extra_headers)
-        return (guid, id_, sender, message)
+        return (guid, id_, thread_keys, sender, message)
 
     def _get_entry_id(self, entry):
         """Get best ID from an entry."""
@@ -626,6 +633,35 @@ class Feed (object):
         if taglist:
             return ','.join(taglist)
 
+    def _get_entry_thread_keys(self, entry):
+        """Thread the entry based on earlier entries
+
+        Returns a dictionary of (key_type, key_value) pairs that later
+        entries can use in constructing entry threads.
+        """
+        link = self._get_entry_link(entry)
+        keys = {
+            'title': self._get_entry_title(entry),
+            'link': link,
+            }
+        if self.threading_regexp:
+            regexp = _re.compile(self.threading_regexp)
+            match = regexp.match(link)
+            if match:
+                keys['regexp'] = match.group(1)
+        return keys
+            
+    def _get_entry_references(self, entry, thread_keys, extra_headers):
+        """Thread the entry based on earlier entries
+
+        Returns a list of Message-IDs that this entry seems to
+        reference.  The Message-IDs will be ordered by date, with the
+        youngest entry first.
+        """
+        mid = extra_headers['Message-ID']
+
+        raise NotImplementedError()
+
     def _get_entry_content(self, entry):
         """Select the best content from an entry.
 
@@ -770,13 +806,19 @@ class Feed (object):
         if not self.to:
             raise _error.NoToEmailAddress(feed=self)
         parsed = self._fetch()
-        for (guid, id_, sender, message) in self._process(parsed):
+        for (guid, id_, thread_keys, sender, message) in self._process(parsed):
             _LOG.debug('new message: {}'.format(message['Subject']))
             if send:
                 self._send(sender=sender, message=message)
             if guid not in self.seen:
                 self.seen[guid] = {}
-            self.seen[guid]['id'] = id_
+            self.seen[guid]['id'] = id
+            self.seen[guid]['date'] = message['date']
             self.seen[guid]['message-id'] = message['message-id']
+            self.seen[guid]['in-reply-to'] = message['in-reply-to']
+            for type_,value in thread_keys.items():
+                if type_ not in self.thread_keys:
+                    self.thread_keys[type_] = {}
+                self.thread_keys[type_][value] = guid
         self.etag = parsed.get('etag', None)
         self.modified = parsed.get('modified', None)

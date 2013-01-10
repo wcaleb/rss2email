@@ -82,6 +82,8 @@ CONFIG['DEFAULT'] = _collections.OrderedDict((
         # expressing ordered list of preference in dates
         # to use for the Date header of the email.
         ('date-header-order', 'modified, issued, created, expired'),
+        # A regular expression for threading entries by link URL
+        ('threading-regexp', r'^https?:[^ ]+-(\d+)\.html?'),
         # Set this to add bonus headers to all emails
         # Example: bonus-header = 'Approved: joe@bob.org'
         ('bonus-header', ''),
