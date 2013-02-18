@@ -305,6 +305,7 @@ class _html2text(HTMLParser.HTMLParser):
             if has_key(attrs, 'src'):
                 attrs['href'] = attrs['src']
                 alt = attrs.get('alt', '')
+                alt = re.sub('\n', ' ', alt)
                 i = self.previousIndex(attrs)
                 if i is not None:
                     attrs = self.a[i]
